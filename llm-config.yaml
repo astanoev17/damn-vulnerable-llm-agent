@@ -1,8 +1,8 @@
-default_model: "huggingface/mistralai/Mistral-7B-Instruct-v0.2"
+default_model: "groq/llama-3.1-8b-instant"
 
 models:
-  - model_name: "huggingface/mistralai/Mistral-7B-Instruct-v0.2"
-    model: "huggingface/mistralai/Mistral-7B-Instruct-v0.2"
+  - model_name: "groq/llama-3.1-8b-instant"
+    model: "groq/llama-3.1-8b-instant"
 
   # Optional: keep Ollama models for local testing (not used on Fly)
   - model_name: "ollama-mistral-nemo"
