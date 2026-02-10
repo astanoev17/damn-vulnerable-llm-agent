@@ -3,7 +3,6 @@ models:
   - model_name: hf-meta-llama
     model: "huggingface/meta-llama/Llama-3.1-8B-Instruct"
 
-  # Optional: keep Ollama entries if you might use them later (they won't work on Fly unless you run Ollama too)
   - model_name: ollama-mistral-nemo
     model: "ollama/mistral-nemo"
 
