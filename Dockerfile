@@ -1,56 +1,47 @@
-# Stage 1: Build the Application
-# We use python:3.9-slim as the base for building and installing dependencies.
+# Stage 1: build dependencies into a venv
 FROM python:3.9-slim AS build
 
-# Set the working directory inside the container
 WORKDIR /usr/src/app
 
-# Install system dependencies needed for building Python packages
-RUN apt-get update && apt-get install -y --no-install-recommends     build-essential     gcc     && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential gcc \
+  && rm -rf /var/lib/apt/lists/*
 
-# Create a virtual environment
 RUN python -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 
-# Copy requirements.txt if it exists (using wildcard to avoid build failure)
-COPY requirements.tx[t] ./requirements.txt
+COPY requirements.txt ./requirements.txt
+RUN pip install --upgrade pip && pip install -r requirements.txt
 
-# Install Python dependencies only if requirements.txt exists
-RUN pip install --upgrade pip &&     if [ -f requirements.txt ]; then         pip install -r requirements.txt;     fi
-
-# Copy the rest of the application source code
 COPY . .
 
-# Stage 2: Create the Final Production Image
-# We use python:3.9-slim as a minimal runtime image.
+
+# Stage 2: runtime image
 FROM python:3.9-slim
 
-# Set the working directory
 WORKDIR /usr/src/app
 
-# Install only runtime dependencies if needed
-RUN apt-get update && apt-get install -y --no-install-recommends     libpq5     && rm -rf /var/lib/apt/lists/*
+# optional runtime libs, keep minimal
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+  && rm -rf /var/lib/apt/lists/*
 
-# Copy the virtual environment from the build stage
 COPY --from=build /opt/venv /opt/venv
+COPY --from=build /usr/src/app /usr/src/app
 
-# Copy the application code
-COPY --from=build /usr/src/app .
-
-# Set the virtual environment as the active Python environment
 ENV PATH="/opt/venv/bin:$PATH"
 
-# Create a non-root user to run the application
+# Copy start.sh into a writable location and set perms BEFORE dropping privileges
+COPY start.sh /usr/local/bin/start.sh
+RUN chmod 755 /usr/local/bin/start.sh
+
+# Non-root user
 RUN useradd -m -u 1000 appuser && chown -R appuser:appuser /usr/src/app
 USER appuser
 
-# Expose the port your app runs on
-ENV PORT=8080
-EXPOSE $PORT
+# Your two ports (Streamlit UI + API)
+EXPOSE 8501
+EXPOSE 8080
 
-COPY start.sh /app/start.sh
-RUN chmod +x /app/start.sh
-CMD ["/app/start.sh"]
-
-# Define the command to start your application
-CMD ["python", "app.py"]
+# Single CMD only
+CMD ["/usr/local/bin/start.sh"]
