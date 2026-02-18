@@ -4,16 +4,29 @@ primary_region = "fra"
 [build]
   dockerfile = "Dockerfile"
 
-[http_service]
+# UI (Streamlit)
+[[services]]
   internal_port = 8501
-  force_https = true
-  auto_start_machines = true
-  auto_stop_machines = true
-  min_machines_running = 0
+  protocol = "tcp"
   processes = ["app"]
+  [[services.ports]]
+    port = 80
+    handlers = ["http"]
+  [[services.ports]]
+    port = 443
+    handlers = ["tls", "http"]
 
-[processes]
-  app = "streamlit run main.py --server.port=8501 --server.address=0.0.0.0"
+# API (FastAPI)
+[[services]]
+  internal_port = 8080
+  protocol = "tcp"
+  processes = ["app"]
+  [[services.ports]]
+    port = 8080
+    handlers = ["http"]
+  [[services.ports]]
+    port = 8443
+    handlers = ["tls", "http"]
 
 [[vm]]
   cpu_kind = "shared"
