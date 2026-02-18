@@ -48,5 +48,9 @@ USER appuser
 ENV PORT=8080
 EXPOSE $PORT
 
+COPY start.sh /app/start.sh
+RUN chmod +x /app/start.sh
+CMD ["/app/start.sh"]
+
 # Define the command to start your application
 CMD ["python", "app.py"]
