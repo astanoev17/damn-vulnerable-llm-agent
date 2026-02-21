@@ -7,8 +7,6 @@ from langchain.callbacks import StreamlitCallbackHandler
 from langchain_litellm import ChatLiteLLM
 from langchain.memory import ConversationBufferMemory
 from langchain.memory.chat_message_histories import StreamlitChatMessageHistory
-from langchain.agents import initialize_agent
-from langchain.callbacks import get_openai_callback
 
 from tools import get_current_user_tool, get_recent_transactions_tool
 from utils import display_instructions, display_logo, fetch_model_config
@@ -48,7 +46,6 @@ if len(msgs.messages) == 0:
 avatars = {"human": "user", "ai": "assistant"}
 for idx, msg in enumerate(msgs.messages):
     with st.chat_message(avatars[msg.type]):
-        # Render intermediate steps if any were saved
         for step in st.session_state.steps.get(str(idx), []):
             if step[0].tool == "_Exception":
                 continue
@@ -59,14 +56,22 @@ for idx, msg in enumerate(msgs.messages):
 
 if prompt := st.chat_input(placeholder="Show my recent transactions"):
     st.chat_message("user").write(prompt)
-    
-    llm = ChatLiteLLM(
-        model=fetch_model_config(),
-        temperature=0, streaming=True
-    )
-    tools = tools
 
-    chat_agent = ConversationalChatAgent.from_llm_and_tools(llm=llm, tools=tools, verbose=True, system_message=system_msg)
+    # IMPORTANT: fetch_model_config() must return provider-qualified model string
+    provider_model = fetch_model_config()
+
+    llm = ChatLiteLLM(
+        model=provider_model,
+        temperature=0,
+        streaming=True
+    )
+
+    chat_agent = ConversationalChatAgent.from_llm_and_tools(
+        llm=llm,
+        tools=tools,
+        verbose=True,
+        system_message=system_msg
+    )
 
     executor = AgentExecutor.from_agent_and_tools(
         agent=chat_agent,
@@ -77,15 +82,12 @@ if prompt := st.chat_input(placeholder="Show my recent transactions"):
         verbose=True,
         max_iterations=6
     )
+
     with st.chat_message("assistant"):
         st_cb = StreamlitCallbackHandler(st.container(), expand_new_thoughts=False)
         response = executor(prompt, callbacks=[st_cb])
         st.write(response["output"])
         st.session_state.steps[str(len(msgs.messages) - 1)] = response["intermediate_steps"]
 
-
 display_instructions()
 display_logo()
-
-
-        
