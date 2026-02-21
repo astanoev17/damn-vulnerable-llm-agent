@@ -1,4 +1,4 @@
-default_model: "openai/llama-4-scout-17b-16e"
+default_model: "fuelix-llama4-scout"
 
 models:
   - model_name: "fuelix-llama4-scout"
