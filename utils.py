@@ -75,11 +75,42 @@ def _load_llm_config():
         yaml_data = yaml.load(f, Loader=yaml.SafeLoader)
     return yaml_data
 
-def fetch_model_config():
-    chosen_model_name = os.getenv("model_name")
-    llm_config = _load_llm_config()
-    for model_config in llm_config.get("models"):
-        if chosen_model_name == model_config.get("model_name"):
-            return model_config.get("model")
-    else:
-        return llm_config.get("default_model")
+def fetch_model_config(config_path: str = "config.yml") -> str:
+    """
+    Returns a provider-qualified model string for LiteLLM, e.g.
+      - "openai/meta-llama/llama-3.1-8b-instruct"
+      - "groq/llama-3.1-8b-instant"
+    Supports selecting by friendly model_name via env var MODEL_NAME.
+    """
+
+    if not os.path.exists(config_path):
+        raise FileNotFoundError(f"Config file not found: {config_path}")
+
+    with open(config_path, "r", encoding="utf-8") as f:
+        cfg = yaml.safe_load(f) or {}
+
+    models = cfg.get("models", []) or []
+    if not models:
+        raise ValueError("No models found in config.yml under 'models:'")
+
+    # Build map: model_name -> provider model string
+    model_map = {}
+    for m in models:
+        name = m.get("model_name")
+        provider_model = m.get("model")
+        if name and provider_model:
+            model_map[name] = provider_model
+
+    # Priority: explicit MODEL_NAME -> default_model -> first model
+    selected_name = os.getenv("MODEL_NAME") or cfg.get("default_model")
+    if selected_name and selected_name in model_map:
+        return model_map[selected_name]
+
+    if selected_name and selected_name not in model_map:
+        raise ValueError(
+            f"Selected model '{selected_name}' not found in config.yml model_name list: {list(model_map.keys())}"
+        )
+
+    # fallback
+    first = next(iter(model_map.values()))
+    return first
