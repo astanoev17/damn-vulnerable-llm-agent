@@ -1,12 +1,11 @@
-default_model: "fuelix-llama-4-scout"
+default_model: "openai/llama-4-scout-17b-16e"
 
 models:
-  - model_name: "fuelix-llama-4-scout"
+  - model_name: "fuelix-llama4-scout"
     model: "openai/llama-4-scout-17b-16e"
 
-  # Optional: add a stronger one too
-  - model_name: "fuelix-llama-4-maverick"
-    model: "openai/llama-4-maverick-17b-128e"
+  - model_name: "fuelix-gpt4o-mini"
+    model: "openai/gpt-4o-mini"
 
   # Groq (optional fallback)
   - model_name: "groq/llama-3.1-8b-instant"
