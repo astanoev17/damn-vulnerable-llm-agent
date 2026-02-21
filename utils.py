@@ -75,7 +75,7 @@ def _load_llm_config():
         yaml_data = yaml.load(f, Loader=yaml.SafeLoader)
     return yaml_data
 
-def fetch_model_config(config_path: str = "models.yaml") -> str:
+def fetch_model_config(config_path: str = "llm-config.yaml") -> str:
     """
     Reads models.yaml and returns provider-qualified model string
     required by LiteLLM.
