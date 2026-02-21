@@ -61,9 +61,11 @@ if prompt := st.chat_input(placeholder="Show my recent transactions"):
     provider_model = fetch_model_config()
 
     llm = ChatLiteLLM(
-        model=provider_model,
+        model=fetch_model_config(),  # returns e.g. "openai/llama-4-scout-17b-16e"
         temperature=0,
-        streaming=True
+        streaming=True,
+        api_base=os.getenv("OPENAI_API_BASE", "https://api.fuelix.ai/v1"),
+        api_key=os.getenv("OPENAI_API_KEY"),
     )
 
     chat_agent = ConversationalChatAgent.from_llm_and_tools(
