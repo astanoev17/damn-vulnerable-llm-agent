@@ -1,10 +1,10 @@
-default_model: "fuelix-llama-3-1-8b"
+default_model: "openai/meta-llama/llama-3.1-8b-instruct"
 
 models:
-  - model_name: "fuelix-llama-3-1-8b"
+  - model_name: "openai/meta-llama/llama-3.1-8b-instruct"
     model: "openai/meta-llama/llama-3.1-8b-instruct"
-    
-models:
+
+  # Groq (optional fallback)
   - model_name: "groq/llama-3.1-8b-instant"
     model: "groq/llama-3.1-8b-instant"
 
