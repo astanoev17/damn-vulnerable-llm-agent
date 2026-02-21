@@ -75,12 +75,10 @@ def _load_llm_config():
         yaml_data = yaml.load(f, Loader=yaml.SafeLoader)
     return yaml_data
 
-def fetch_model_config(config_path: str = "config.yml") -> str:
+def fetch_model_config(config_path: str = "models.yaml") -> str:
     """
-    Returns a provider-qualified model string for LiteLLM, e.g.
-      - "openai/meta-llama/llama-3.1-8b-instruct"
-      - "groq/llama-3.1-8b-instant"
-    Supports selecting by friendly model_name via env var MODEL_NAME.
+    Reads models.yaml and returns provider-qualified model string
+    required by LiteLLM.
     """
 
     if not os.path.exists(config_path):
@@ -89,28 +87,23 @@ def fetch_model_config(config_path: str = "config.yml") -> str:
     with open(config_path, "r", encoding="utf-8") as f:
         cfg = yaml.safe_load(f) or {}
 
-    models = cfg.get("models", []) or []
+    models = cfg.get("models", [])
+    default_model_name = cfg.get("default_model")
+
     if not models:
-        raise ValueError("No models found in config.yml under 'models:'")
+        raise ValueError("No models defined in models.yaml")
 
-    # Build map: model_name -> provider model string
-    model_map = {}
-    for m in models:
-        name = m.get("model_name")
-        provider_model = m.get("model")
-        if name and provider_model:
-            model_map[name] = provider_model
+    # Build alias → provider map
+    model_map = {
+        m["model_name"]: m["model"]
+        for m in models
+        if "model_name" in m and "model" in m
+    }
 
-    # Priority: explicit MODEL_NAME -> default_model -> first model
-    selected_name = os.getenv("MODEL_NAME") or cfg.get("default_model")
-    if selected_name and selected_name in model_map:
-        return model_map[selected_name]
+    # Use default_model alias to get provider string
+    if default_model_name in model_map:
+        return model_map[default_model_name]
 
-    if selected_name and selected_name not in model_map:
-        raise ValueError(
-            f"Selected model '{selected_name}' not found in config.yml model_name list: {list(model_map.keys())}"
-        )
-
-    # fallback
-    first = next(iter(model_map.values()))
-    return first
+    raise ValueError(
+        f"default_model '{default_model_name}' not found in models.yaml model_name list"
+    )
